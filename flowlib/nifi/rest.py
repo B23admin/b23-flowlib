@@ -288,7 +288,7 @@ def deploy_flow(flow, config, deployment=None, force=False):
         # because the controller() jinja helper needs to lookup controller IDs for injecting into the processor's properties
         flowlib.parser.replace_flow_element_vars_recursive(flow, flow._elements, flow.components)
 
-        _create_canvas_elements_recursive(flow._elements, flow_pg, config, deployment, previous_deployment)
+        _create_canvas_elements_recursive(flow._elements, flow_pg, config, flow._controllers, deployment, previous_deployment)
         #
         _create_connections_recursive(flow, flow._elements)
         _set_controllers_enabled(flow._controllers, enabled=True)
@@ -457,7 +457,7 @@ def _set_reporting_tasks_enabled(tasks, enabled=True):
         )
 
 
-def _create_canvas_elements_recursive(elements, parent_pg, config, current_deployment, previous_deployment=None):
+def _create_canvas_elements_recursive(elements, parent_pg, config, controller_services, current_deployment, previous_deployment=None):
     """
     Recursively creates the actual NiFi elements (process_groups, processors, inputs, outputs) on the canvas
     :param elements: The elements to deploy
@@ -479,9 +479,9 @@ def _create_canvas_elements_recursive(elements, parent_pg, config, current_deplo
         position = positions[el.name]
         if isinstance(el, ProcessGroup):
             pg = _create_process_group(el, parent_pg, position, current_deployment)
-            _create_canvas_elements_recursive(el._elements, pg, config, current_deployment, previous_deployment)
+            _create_canvas_elements_recursive(el._elements, pg, config, controller_services, current_deployment, previous_deployment)
         elif isinstance(el, Processor):
-            _create_processor(el, parent_pg, position, config, current_deployment, previous_deployment)
+            _create_processor(el, parent_pg, position, config, controller_services, current_deployment, previous_deployment)
         elif isinstance(el, RemoteProcessGroup):
             _create_remote_process_group(el, parent_pg, position)
         elif isinstance(el, InputPort):
@@ -564,7 +564,7 @@ def _create_process_group(element, parent_pg, position, current_deployment, is_f
     return pg
 
 
-def _create_processor(element, parent_pg, position, config, current_deployment, previous_deployment=None):
+def _create_processor(element, parent_pg, position, config, controller_services, current_deployment, previous_deployment=None):
     """
     Create a Processor on the NiFi canvas
     :param element: The Processor to deploy
@@ -587,6 +587,7 @@ def _create_processor(element, parent_pg, position, config, current_deployment, 
     else:
         log.debug("Creating Processor: {} with parent: {}".format(name, element.parent_path))
         _type = nipyapi.nifi.models.DocumentedTypeDTO(type=element.config.package_id)
+
         p = nipyapi.canvas.create_processor(parent_pg, _type, position, name, element.config)
 
         # If the processor is marked as stateful, add it to the deployment's stateful_processors
@@ -619,7 +620,6 @@ def _create_processor(element, parent_pg, position, config, current_deployment, 
     element.id = p.id
     element.parent_id = parent_pg.id
     return p
-
 
 def _create_input_port(element, parent_pg, position):
     """

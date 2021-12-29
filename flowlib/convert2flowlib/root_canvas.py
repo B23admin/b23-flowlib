@@ -1,3 +1,5 @@
+from flowlib.utils import resolve_uuids_in_processor_properties
+
 def build_connection_type(resource: dict, parent_processor_group: dict, child_processor_group: dict) -> list:
     _data = []
 
@@ -100,7 +102,7 @@ def extract_processors(processors: list) -> list:
     return _data
 
 
-def extract_processors_with_connections(parent_data: dict, child_data: dict) -> list:
+def extract_processors_with_connections(parent_data: dict, child_data: dict, controller_services: dict) -> list:
     _data = []
 
     for processor in child_data["processors"]:
@@ -109,7 +111,7 @@ def extract_processors_with_connections(parent_data: dict, child_data: dict) -> 
             "type": processor["componentType"].lower(),
             "config": {
                 "package_id": processor["type"],
-                "properties": processor["properties"]
+                "properties": resolve_uuids_in_processor_properties(processor["properties"], controller_services)
             }
         }
 
@@ -125,7 +127,6 @@ def extract_processors_with_connections(parent_data: dict, child_data: dict) -> 
         _data.append(build_processor)
 
     return _data
-
 
 def extract_remote_process_group(remote_processor_groups: list) -> list:
     _data = []
@@ -207,6 +208,7 @@ def extract_controller_services(controller_services: list) -> list:
         build_controller_service = {
             "name": controller_service["name"],
             "config": {
+                "id": controller_service["identifier"],
                 "package_id": controller_service["type"],
                 "properties": controller_service["properties"]
             }
@@ -248,7 +250,7 @@ def multiple_resources_with_no_connections(data: dict) -> dict:
     return _tmp
 
 
-def multiple_resources_with_connections(parent_process_group_data=None, child_process_group_data=None) -> dict:
+def multiple_resources_with_connections(parent_process_group_data=None, child_process_group_data=None, controller_services=None) -> dict:
     _tmp = {
         "canvas": []
     }
@@ -270,7 +272,7 @@ def multiple_resources_with_connections(parent_process_group_data=None, child_pr
 
     if child_process_group_data["processors"]:
         old_data = _tmp["canvas"]
-        for processor in extract_processors_with_connections(parent_process_group_data, child_process_group_data):
+        for processor in extract_processors_with_connections(parent_process_group_data, child_process_group_data, controller_services):
             old_data.append(processor)
 
     return _tmp

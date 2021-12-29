@@ -89,8 +89,9 @@ class STRUCTURE:
 
                 if process_group["connections"]:
                     append_to_tmp(process_group_identity(process_group))
-                    append_to_tmp(multiple_resources_with_connections(child_process_group_data=process_group))
-                    append_to_tmp(controller_services(process_group))
+                    services = controller_services(process_group)
+                    append_to_tmp(services)
+                    append_to_tmp(multiple_resources_with_connections(child_process_group_data=process_group,controller_services=services))
                     append_to_tmp(processor_group_variables(process_group))
 
                     self.global_content.setdefault(

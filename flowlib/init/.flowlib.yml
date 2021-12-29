@@ -13,6 +13,7 @@ component_dir: components
 reporting_task_controllers:
 - name: graphite-metrics-service
   config:
+    id: 276fbfe7-5916-3bd8-b4db-9f90dbfc97d4
     package_id: org.apache.nifi.metrics.reporting.reporter.service.GraphiteMetricReporterService
     properties:
       host: '127.0.0.1'
@@ -22,6 +23,7 @@ reporting_task_controllers:
 reporting_tasks:
 - name: metrics-reporting-task
   config:
+    id: 276fbfe7-5916-3bd8-b4db-9f90dbfc97d5
     package_id: org.apache.nifi.metrics.reporting.task.MetricsReportingTask
     properties:
       metric reporter service: "{{ controller('graphite-metrics-service') }}"
